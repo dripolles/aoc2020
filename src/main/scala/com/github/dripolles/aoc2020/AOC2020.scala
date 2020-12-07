@@ -3,10 +3,11 @@ package com.github.dripolles.aoc2020
 import com.github.dripolles.aoc2020.day01.Day01
 import com.github.dripolles.aoc2020.day02.Day02
 import com.github.dripolles.aoc2020.day03.TobogganState
+import com.github.dripolles.aoc2020.day04.Day04
 
 object AOC2020 {
   def main(args: Array[String]): Unit = {
-    day03
+    day04
   }
 
   def day01 = {
@@ -32,5 +33,14 @@ object AOC2020 {
     val count_2_1: BigInt = state.countTrees { _.move(2, 1) }
 
     println(count_1_1 * count_1_3 * count_1_5 * count_1_7 * count_2_1)
+  }
+
+  def day04 = {
+    val passports = Day04.parse(Day04.sourceLines)
+    val validFieldsCount = passports.count { _.isValidFields }
+    println(validFieldsCount)
+
+    val validCount = passports.count { _.isValid }
+    println(validCount)
   }
 }
