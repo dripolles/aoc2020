@@ -8,15 +8,14 @@ case class NoOp(unused: Int) extends Op
 case class Jmp(offset: Int) extends Op
 case class Acc(delta: Int) extends Op
 
-case class ProgramOp(op: Op, visited: Boolean = false)
-
 case class ProgramState(
-  ops: Seq[ProgramOp],
+  ops: Seq[Op],
+  visited: Set[Int] = Set.empty,
   pos: Int = 0,
   acc: Int = 0
 ) {
 
-  def isInLoop: Boolean = ops.lift(pos).fold(false) { _.visited }
+  def isInLoop: Boolean = visited.contains(pos)
   def isDone: Boolean = pos == ops.length
   def isOutOfBounds: Boolean = pos >= ops.length
 
@@ -34,15 +33,15 @@ case class ProgramState(
     done #::: toDo.take(1)
   }
 
-  def runStep: ProgramState = {
-    val programOp = ops(pos)
-    val (nextPos, accDelta) = programOp.op match {
+  private def runStep: ProgramState = {
+    val (nextPos, accDelta) = ops(pos) match {
       case NoOp(_) => (pos + 1, 0)
       case Acc(delta) => (pos + 1, delta)
       case Jmp(offset) => (pos + offset, 0)
     }
     ProgramState(
-      ops = ops.updated(pos, programOp.copy(visited = true)),
+      ops = ops,
+      visited = visited + pos,
       pos = nextPos,
       acc = acc + accDelta,
     )
@@ -63,12 +62,13 @@ case class ProgramState(
   }
 
   private def replacedStates[T](mapper: T => Op)(implicit tag: ClassTag[T]): LazyList[ProgramState] = {
-    val opPositions = ops.zipWithIndex.filter { case (p, _) => p.op.getClass == tag.runtimeClass }.map(_._2)
+    val opPositions = ops.zipWithIndex.filter { case (op, _) => op.getClass == tag.runtimeClass }.map(_._2)
+
     LazyList.from(opPositions).map { idx =>
-      val toReplace = ops(idx).op.asInstanceOf[T]
+      val toReplace = ops(idx).asInstanceOf[T]
       val replaced = mapper(toReplace)
       copy(
-        ops = ops.updated(idx, ProgramOp(replaced)),
+        ops = ops.updated(idx, replaced),
       )
     }
   }
@@ -77,17 +77,18 @@ case class ProgramState(
 
 object Day08 {
   def parseInput(lines: Seq[String]): ProgramState = {
-    val programOps = lines.map { line =>
+    val ops = lines.map { line =>
       val parts = line.split(" ", 2)
       val (opStr, value) = (parts(0), parts(1).toInt)
-      val op = opStr match {
+
+      opStr match {
         case "nop" => NoOp(value)
         case "acc" => Acc(value)
         case "jmp" => Jmp(value)
+        case _ => throw new RuntimeException(s"invalid op: $opStr")
       }
-      ProgramOp(op)
     }
 
-    ProgramState(ops = programOps)
+    ProgramState(ops = ops)
   }
 }
