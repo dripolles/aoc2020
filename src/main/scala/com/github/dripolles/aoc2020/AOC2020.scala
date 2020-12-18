@@ -8,12 +8,13 @@ import com.github.dripolles.aoc2020.day05.Day05
 import com.github.dripolles.aoc2020.day06.Day06
 import com.github.dripolles.aoc2020.day07.Day07
 import com.github.dripolles.aoc2020.day08.Day08
+import com.github.dripolles.aoc2020.day09.Day09
 
 import scala.io.Source
 
 object AOC2020 {
   def main(args: Array[String]): Unit = {
-    day08
+    day09
   }
 
   def day01 = {
@@ -88,5 +89,19 @@ object AOC2020 {
 
     val finalState = programState.findCorrectFinalState.get
     println(finalState.acc)
+  }
+
+  def day09 = {
+    val input = Source.fromResource("day09input.txt").getLines().toSeq
+    val (preamble, numbers) = Day09.parseInput(input, 25)
+    val solution1 = Day09.firstNotInSums(preamble, numbers)
+    println(solution1)
+
+    val solution2 = Day09.findContiguousSum(solution1.get, preamble :++ numbers)
+    println(solution2)
+    solution2.map { l =>
+      println(l.sum == solution1.get)
+      println(l.min + l.max)
+    }
   }
 }
